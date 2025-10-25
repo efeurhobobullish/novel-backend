@@ -42,7 +42,7 @@ require("./utils/socket")(io);
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/novels", require("./routes/novelRoutes"));
 app.use("/api/wallet", require("./routes/walletRoutes"));
-
+app.use("/api/admin", require("./routes/adminRoutes"));
 // Error handler
 app.use(require("./middleware/errorHandler"));
 
