@@ -9,12 +9,13 @@ connectDB();
 const app = express();
 
 const allowedOrigins = [
-  "https://swiftnovel.netlify.app"
+  "https://swiftnovel.netlify.app",
+  "http://localhost:3000"
 ];
 
 const corsOptions = {
   origin(origin, callback) {
-    if (!origin) return callback(null, true); // allow non-browser clients
+    if (!origin) return callback(null, true); // allow tools like Postman
     if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error("CORS blocked: " + origin));
   },
@@ -24,8 +25,8 @@ const corsOptions = {
   optionsSuccessStatus: 204
 };
 
+// ✅ enable CORS with automatic preflight
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // ✅ safe with Express 5
 
 app.use(express.json());
 
