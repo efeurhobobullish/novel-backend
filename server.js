@@ -12,55 +12,29 @@ const app = express();
 const server = http.createServer(app);
 
 // --- CORS CONFIG ---
-/**
- * FRONTEND_URLS is a comma-separated list of allowed origins, e.g.:
- * http://localhost:5500,http://127.0.0.1:5500,https://yourdomain.com
- * If you open HTML files directly (file:// origin is null/undefined) we allow it.
- */
-const allowedOrigins = (process.env.FRONTEND_URLS || "https://swiftnovel.netlify.app")
-  .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
+const allowedOrigins = [
+  "https://swiftnovel.netlify.app",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500"
+];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // allow mobile apps, curl, Postman, and file:// (no origin)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error("Not allowed by CORS: " + origin));
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("CORS blocked: " + origin));
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  exposedHeaders: ["Authorization"]
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 };
 
-// Apply CORS early
 app.use(cors(corsOptions));
-// Handle preflight for all routes
 app.options("*", cors(corsOptions));
+app.use(express.json());
 
-// Important if you deploy behind a proxy (Heroku/Render/etc.)
-app.set("trust proxy", 1);
-
-// NOTE: use raw body for Paystack webhook only (signature check), json elsewhere
-const bodyParser = require("body-parser");
-app.use((req, res, next) => {
-  if (req.path === "/api/wallet/webhook") {
-    return bodyParser.raw({ type: "*/*" })(req, res, next);
-  }
-  return express.json()(req, res, next);
-});
-
-// --- SOCKET.IO with CORS ---
+// --- SOCKET.IO ---
 const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins.length ? allowedOrigins : "*",
-    methods: ["GET", "POST"],
-    credentials: true
-  }
+  cors: { origin: allowedOrigins, credentials: true }
 });
 require("./utils/socket")(io);
 
@@ -77,12 +51,9 @@ app.use(require("./middleware/errorHandler"));
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
 
-// Export io for controllers
 module.exports = { io };
 
-/* =========================
-   DEMO DATA (auto-seed)
-   ========================= */
+// === DEMO DATA SEED ===
 const User = require("./models/User");
 const Novel = require("./models/Novel");
 const Episode = require("./models/Episode");
@@ -141,4 +112,5 @@ async function seedDemoData() {
     console.log("✅ Episode 2 created");
   }
 }
+
 seedDemoData();
