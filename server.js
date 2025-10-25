@@ -8,15 +8,19 @@ connectDB();
 
 const app = express();
 
+/** ---------- CORS CONFIG ---------- */
 const allowedOrigins = [
-  "https://swiftnovel.netlify.app",
-  "http://localhost:3000"
+  "https://swiftnovel.netlify.app", // your Netlify frontend
+  "http://localhost:3000"           // local dev
 ];
 
 const corsOptions = {
   origin(origin, callback) {
-    if (!origin) return callback(null, true); // allow tools like Postman
+    // allow requests without origin (Postman, curl, etc.)
+    if (!origin) return callback(null, true);
+    // allow if origin is in whitelist
     if (allowedOrigins.includes(origin)) return callback(null, true);
+    // otherwise block
     return callback(new Error("CORS blocked: " + origin));
   },
   credentials: true,
@@ -25,13 +29,16 @@ const corsOptions = {
   optionsSuccessStatus: 204
 };
 
-// ✅ enable CORS with automatic preflight
+// ✅ enable CORS globally
 app.use(cors(corsOptions));
+/** -------------------------------- */
 
 app.use(express.json());
 
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/novels", require("./routes/novelRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
