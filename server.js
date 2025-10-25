@@ -8,36 +8,24 @@ connectDB();
 
 const app = express();
 
-/** ---------- CORS (Frontend-safe) ---------- */
 const allowedOrigins = [
   "https://swiftnovel.netlify.app"
 ];
 
-// optionally support comma-separated env var FRONTEND_ORIGINS
-if (process.env.FRONTEND_ORIGINS) {
-  process.env.FRONTEND_ORIGINS.split(",")
-    .map(s => s.trim())
-    .filter(Boolean)
-    .forEach(o => { if (!allowedOrigins.includes(o)) allowedOrigins.push(o); });
-}
-
 const corsOptions = {
   origin(origin, callback) {
-    // allow non-browser clients (e.g., Postman) with no Origin header
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // allow non-browser clients
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    return callback(new Error("CORS blocked: " + origin));
   },
+  credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-  optionsSuccessStatus: 204, // some legacy browsers choke on 200
+  optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
-// handle all preflight requests quickly
-app.options("*", cors(corsOptions));
-/** ----------------------------------------- */
+app.options("*", cors(corsOptions)); // ✅ safe with Express 5
 
 app.use(express.json());
 
