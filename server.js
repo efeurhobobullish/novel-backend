@@ -1,52 +1,50 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const http = require("http");
-const { Server } = require("socket.io");
 const connectDB = require("./config/db");
 
 dotenv.config();
 connectDB();
 
 const app = express();
-const server = http.createServer(app);
 
-// --- CORS CONFIG ---
+/** ---------- CORS (Frontend-safe) ---------- */
 const allowedOrigins = [
-  "https://swiftnovel.netlify.app"
+  "https://swiftnovel.netlify.app", // your deployed frontend
+  "http://localhost:3000",          // local dev (optional)
+  "http://127.0.0.1:3000"           // local dev (optional)
 ];
 
+// optionally support comma-separated env var FRONTEND_ORIGINS
+if (process.env.FRONTEND_ORIGINS) {
+  process.env.FRONTEND_ORIGINS.split(",")
+    .map(s => s.trim())
+    .filter(Boolean)
+    .forEach(o => { if (!allowedOrigins.includes(o)) allowedOrigins.push(o); });
+}
+
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error("CORS blocked: " + origin));
+  origin(origin, callback) {
+    // allow non-browser clients (e.g., Postman) with no Origin header
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  optionsSuccessStatus: 204, // some legacy browsers choke on 200
 };
 
 app.use(cors(corsOptions));
-// 👇 Allow OPTIONS preflight for all routes
-app.options(/.*/, cors(corsOptions));
+// handle all preflight requests quickly
+app.options("*", cors(corsOptions));
+/** ----------------------------------------- */
 
 app.use(express.json());
 
-// --- SOCKET.IO ---
-const io = new Server(server, {
-  cors: { origin: allowedOrigins, credentials: true }
-});
-require("./utils/socket")(io);
-
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/novels", require("./routes/novelRoutes"));
-app.use("/api/wallet", require("./routes/walletRoutes"));
-app.use("/api/admin", require("./routes/adminRoutes"));
-// Error handler
-app.use(require("./middleware/errorHandler"));
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
-
-module.exports = { io };
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
