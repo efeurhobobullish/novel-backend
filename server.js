@@ -13,9 +13,7 @@ const server = http.createServer(app);
 
 // --- CORS CONFIG ---
 const allowedOrigins = [
-  "https://swiftnovel.netlify.app",
-  "http://localhost:5500",
-  "http://127.0.0.1:5500"
+  "https://swiftnovel.netlify.app"
 ];
 
 const corsOptions = {
@@ -29,9 +27,10 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-app.use(express.json());
+// 👇 Fix: allow OPTIONS preflight for all routes
+app.options(/.*/, cors(corsOptions));
 
+app.use(express.json());
 // --- SOCKET.IO ---
 const io = new Server(server, {
   cors: { origin: allowedOrigins, credentials: true }
