@@ -10,9 +10,7 @@ const app = express();
 
 /** ---------- CORS (Frontend-safe) ---------- */
 const allowedOrigins = [
-  "https://swiftnovel.netlify.app", // your deployed frontend
-  "http://localhost:3000",          // local dev (optional)
-  "http://127.0.0.1:3000"           // local dev (optional)
+  "https://swiftnovel.netlify.app"
 ];
 
 // optionally support comma-separated env var FRONTEND_ORIGINS
