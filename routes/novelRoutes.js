@@ -1,17 +1,16 @@
 const express = require("express");
+const { getNovels, getNovel, getEpisode } = require("../controllers/novelController");
 const Novel = require("../models/Novel");
 const Episode = require("../models/Episode");
-const { getNovels, getNovel, getEpisode } = require("../controllers/novelController");
 
 const router = express.Router();
 
-// 🚀 Seeder route (for testing only)
+// 🚀 Seed route (for dev only)
 router.get("/seed", async (req, res) => {
   try {
     await Novel.deleteMany();
     await Episode.deleteMany();
 
-    // Create first novel
     const novel1 = await Novel.create({
       title: "The Empire Saga",
       genre: "Fantasy",
@@ -37,7 +36,6 @@ router.get("/seed", async (req, res) => {
     novel1.episodes.push(ep1._id, ep2._id);
     await novel1.save();
 
-    // Create second novel
     const novel2 = await Novel.create({
       title: "Romance in Lagos",
       genre: "Romance",
@@ -57,14 +55,13 @@ router.get("/seed", async (req, res) => {
 
     res.json({ message: "🌱 Seed data inserted successfully" });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// existing routes
+// Order matters
 router.get("/", getNovels);
-router.get("/:id", getNovel);
 router.get("/episode/:id", getEpisode);
+router.get("/:id", getNovel);
 
 module.exports = router;
